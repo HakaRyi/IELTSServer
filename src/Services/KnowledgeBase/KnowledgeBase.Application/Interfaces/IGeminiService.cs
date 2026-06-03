@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using KnowledgeBase.Application.DTOs;
 
 namespace KnowledgeBase.Application.Interfaces;
 

@@ -40,6 +40,15 @@ public class CreateLexicalItemRequest
 
 public class UpdateLexicalItemRequest : CreateLexicalItemRequest { }
 
+// Gợi ý từ khi search
+public class SuggestItemDto
+{
+    public string Id { get; set; } = null!;
+    public string Value { get; set; } = null!;
+    public string Type { get; set; } = null!;
+    public List<string> Topics { get; set; } = new();
+}
+
 // Kết quả phân trang
 public class PagedResult<T>
 {

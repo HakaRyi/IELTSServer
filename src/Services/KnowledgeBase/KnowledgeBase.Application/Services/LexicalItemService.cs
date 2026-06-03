@@ -128,4 +128,16 @@ public class LexicalItemService : ILexicalItemService
     };
 
     public Task<List<LexicalItem>> GetAllAsync() => _repository.GetAllAsync();
+
+    public async Task<List<SuggestItemDto>> SearchAsync(string prefix, int limit)
+    {
+        var items = await _repository.SearchByPrefixAsync(prefix.Trim(), limit);
+        return items.Select(i => new SuggestItemDto
+        {
+            Id = i.Id,
+            Value = i.Value,
+            Type = i.Type,
+            Topics = i.Topics
+        }).ToList();
+    }
 }

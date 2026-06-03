@@ -26,6 +26,16 @@ public class LexicalItemsController : ControllerBase
         return Ok(result);
     }
 
+    // GET /api/lexical/suggest?q=res&limit=8
+    [HttpGet("suggest")]
+    public async Task<IActionResult> Suggest([FromQuery] string q, [FromQuery] int limit = 8)
+    {
+        if (string.IsNullOrWhiteSpace(q) || q.Length < 1)
+            return Ok(Array.Empty<object>());
+        var result = await _service.SearchAsync(q, Math.Clamp(limit, 1, 20));
+        return Ok(result);
+    }
+
     // GET /api/lexical?topic=Environment&page=1&pageSize=20
     [HttpGet]
     public async Task<IActionResult> GetVault(

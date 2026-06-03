@@ -61,4 +61,15 @@ public class LexicalItemRepository : ILexicalItemRepository
         var topics = await _collection.Distinct<string>("Topics", FilterDefinition<LexicalItem>.Empty).ToListAsync();
         return topics.OrderBy(t => t).ToList();
     }
+
+    public async Task<List<LexicalItem>> SearchByPrefixAsync(string prefix, int limit)
+    {
+        var filter = Builders<LexicalItem>.Filter.Regex(
+            x => x.Value,
+            new BsonRegularExpression($"^{Regex.Escape(prefix)}", "i"));
+        return await _collection.Find(filter)
+            .SortBy(x => x.Value)
+            .Limit(limit)
+            .ToListAsync();
+    }
 }

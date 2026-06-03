@@ -1,7 +1,6 @@
 using Grpc.Core;
 using KnowledgeBase.Application.Interfaces;
 using KnowledgeBase.API.Grpc;
-using System.Threading.Tasks;
 
 namespace KnowledgeBase.API.GrpcServices;
 
@@ -14,19 +13,22 @@ public class LexicalGrpcService : LexicalVault.LexicalVaultBase
         _service = service;
     }
 
-    public override async Task<LexicalListResponse> GetAllLexicalItems(EmptyRequest request, ServerCallContext context)
+    public override async Task<LexicalListResponse> GetAllLexicalItems(
+        EmptyRequest request, ServerCallContext context)
     {
         var items = await _service.GetAllAsync();
         var response = new LexicalListResponse();
 
         foreach (var item in items)
         {
-            response.Items.Add(new LexicalItemMessage
+            var msg = new LexicalItemMessage
             {
-                Id = item.Id,
+                Id    = item.Id,
                 Value = item.Value,
-                Type = item.Type
-            });
+                Type  = item.Type,
+            };
+            msg.Topics.AddRange(item.Topics);
+            response.Items.Add(msg);
         }
 
         return response;

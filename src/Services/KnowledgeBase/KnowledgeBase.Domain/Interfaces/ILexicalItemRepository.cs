@@ -12,5 +12,6 @@ public interface ILexicalItemRepository
 
     Task<LexicalItem?> GetByValueAsync(string value);
     Task<(List<LexicalItem> Items, long Total)> GetPagedAsync(string? topic, int page, int pageSize);
-    Task<List<string>> GetDistinctTopicsAsync();    
+    Task<List<string>> GetDistinctTopicsAsync();
+    Task<List<LexicalItem>> SearchByPrefixAsync(string prefix, int limit);
 }

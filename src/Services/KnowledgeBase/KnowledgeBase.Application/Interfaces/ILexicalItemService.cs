@@ -13,4 +13,5 @@ public interface ILexicalItemService
     Task<bool> UpdateAsync(string id, UpdateLexicalItemRequest request);
     Task<bool> DeleteAsync(string id);
     Task<List<LexicalItem>> GetAllAsync();
+    Task<List<SuggestItemDto>> SearchAsync(string prefix, int limit);
 }

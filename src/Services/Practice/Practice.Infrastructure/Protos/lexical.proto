@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option csharp_namespace = "Practice.Infrastructure.Grpc";
+
+package lexical;
+
+service LexicalVault {
+  rpc GetAllLexicalItems (EmptyRequest) returns (LexicalListResponse);
+}
+
+message EmptyRequest {}
+
+message LexicalItemMessage {
+  string id = 1;
+  string value = 2;
+  string type = 3;
+  repeated string topics = 4;
+}
+
+message LexicalListResponse {
+  repeated LexicalItemMessage items = 1;
+}
