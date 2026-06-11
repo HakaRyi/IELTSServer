@@ -86,6 +86,50 @@ Rules:
         return result ?? throw new InvalidOperationException("Groq returned invalid speaking data.");
     }
 
+    // ─── Essay scoring ───────────────────────────────────────────────────────
+
+    public async Task<EssayScoreResult> ScoreEssayAsync(
+        string prompt, string essayText, List<string> targetWords)
+    {
+        var vocabNote = targetWords.Count > 0
+            ? $@"The learner has been studying these vocabulary words: {string.Join(", ", targetWords)}.
+In ""usedTargetVocabulary"" list ONLY the studied words that the learner actually used correctly and naturally in the essay (empty list if none)."
+            : @"In ""usedTargetVocabulary"" return an empty list.";
+
+        var fullPrompt = $@"You are a certified IELTS Writing examiner. Score the following IELTS Writing Task 2 essay
+using the official 4 band-descriptor criteria. Be strict and realistic (band 0-9, allow .5 steps).
+
+PROMPT (the essay question):
+{prompt}
+
+ESSAY (the candidate's answer):
+{essayText}
+
+{vocabNote}
+
+Return a JSON object with this exact structure:
+{{
+  ""overallBand"": 6.5,
+  ""taskResponse"": {{ ""band"": 6.5, ""comment"": ""..."" }},
+  ""coherenceCohesion"": {{ ""band"": 6.0, ""comment"": ""..."" }},
+  ""lexicalResource"": {{ ""band"": 7.0, ""comment"": ""..."" }},
+  ""grammaticalRange"": {{ ""band"": 6.0, ""comment"": ""..."" }},
+  ""generalFeedback"": ""2-4 sentences overall summary"",
+  ""improvements"": [""concrete actionable suggestion 1"", ""suggestion 2"", ""suggestion 3""],
+  ""usedTargetVocabulary"": [""word1"", ""word2""]
+}}
+
+Rules:
+- overallBand = average of the 4 criteria rounded to nearest 0.5.
+- Comments must reference specific issues in THIS essay, not generic advice.
+- Write all comments and feedback in English.";
+
+        var json = await CallGroqAsync(fullPrompt);
+        var result = JsonSerializer.Deserialize<EssayScoreResult>(json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        return result ?? throw new InvalidOperationException("Groq returned invalid essay score.");
+    }
+
     // ─── Shared helper ───────────────────────────────────────────────────────
 
     private async Task<string> CallGroqAsync(string prompt)

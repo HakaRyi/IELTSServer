@@ -23,6 +23,7 @@ builder.Services.AddHttpClient<ILlmService, GroqService>();
 // Repositories
 builder.Services.AddScoped<IGeneratedPassageRepository, GeneratedPassageRepository>();
 builder.Services.AddScoped<ISpeakingRepository, SpeakingRepository>();
+builder.Services.AddScoped<IEssayRepository, EssayRepository>();
 
 // External clients
 builder.Services.AddScoped<ILexicalVaultClient, LexicalVaultGrpcClient>();
@@ -30,6 +31,7 @@ builder.Services.AddScoped<ILexicalVaultClient, LexicalVaultGrpcClient>();
 // Services
 builder.Services.AddScoped<IPassageService, PassageService>();
 builder.Services.AddScoped<ISpeakingService, SpeakingService>();
+builder.Services.AddScoped<IEssayService, EssayService>();
 
 builder.Services.AddIeltsJwtAuth(builder.Configuration);
 

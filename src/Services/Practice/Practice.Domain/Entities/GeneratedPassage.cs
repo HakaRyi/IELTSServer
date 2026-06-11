@@ -21,5 +21,8 @@ public class GeneratedPassage
 
     public List<string> UsedLexicalItemIds { get; set; } = new();
 
+    /// <summary>Các từ vựng (chuỗi) đã yêu cầu tích hợp — dùng để highlight trong bài.</summary>
+    public List<string> UsedVocabulary { get; set; } = new();
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

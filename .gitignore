@@ -377,3 +377,9 @@ appsettings.json
 appsettings.Development.json
 appsettings.Production.json
 !appsettings.Example.json
+
+# Gateway routing config — không có secret, vẫn commit
+!src/Gateway/ApiGateway/appsettings.json
+
+# Bí mật deploy — không commit
+.env

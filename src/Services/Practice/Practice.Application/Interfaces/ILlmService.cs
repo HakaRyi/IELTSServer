@@ -7,4 +7,5 @@ public interface ILlmService
 {
     Task<(string English, string Vietnamese)> GenerateEssayAsync(string topic, double band, List<string> words);
     Task<SpeakingGeminiResult> GenerateSpeakingAsync(string topic, double band, List<string> words);
+    Task<EssayScoreResult> ScoreEssayAsync(string prompt, string essayText, List<string> targetWords);
 }

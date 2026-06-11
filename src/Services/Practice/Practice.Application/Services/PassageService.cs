@@ -35,7 +35,8 @@ public class PassageService : IPassageService
             TargetBand = request.TargetBand,
             EnglishContent = english,
             VietnameseTranslation = vietnamese,
-            UsedLexicalItemIds = request.LexicalItemIds
+            UsedLexicalItemIds = request.LexicalItemIds,
+            UsedVocabulary = words
         };
 
         await _repository.CreateAsync(passage);
@@ -62,6 +63,7 @@ public class PassageService : IPassageService
         EnglishContent = p.EnglishContent,
         VietnameseTranslation = p.VietnameseTranslation,
         UsedLexicalItemIds = p.UsedLexicalItemIds,
+        UsedVocabulary = p.UsedVocabulary,
         CreatedAt = p.CreatedAt
     };
 }

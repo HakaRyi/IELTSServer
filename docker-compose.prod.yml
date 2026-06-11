@@ -1,0 +1,143 @@
+# Production compose — chạy TOÀN BỘ hệ thống (5 service + gateway + 2 DB) trên 1 máy.
+# Bí mật lấy từ file .env (cùng thư mục). Chỉ Gateway (5000) lộ ra ngoài.
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Cấu hình truyền qua biến môi trường (ASP.NET map "__" -> section:key).
+
+x-jwt: &jwt
+  Jwt__Key: ${JWT_KEY}
+  Jwt__Issuer: "IeltsPkm.Auth"
+  Jwt__Audience: "IeltsPkm.Clients"
+
+x-mongo: &mongo
+  MongoDbSettings__ConnectionString: "mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017"
+
+x-groq: &groq
+  Groq__ApiKey: ${GROQ_API_KEY}
+  Groq__Model: "llama-3.3-70b-versatile"
+
+services:
+  # ─── Databases ────────────────────────────────────────────────────────────
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: IeltsAuth
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ─── Services ─────────────────────────────────────────────────────────────
+  auth:
+    build:
+      context: .
+      args:
+        PROJECT_PATH: src/Services/Auth/Auth.API/Auth.API.csproj
+        ASSEMBLY: Auth.API.dll
+    restart: unless-stopped
+    environment:
+      <<: *jwt
+      ASPNETCORE_URLS: "http://+:5072"
+      ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=IeltsAuth;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  knowledgebase:
+    build:
+      context: .
+      args:
+        PROJECT_PATH: src/Services/KnowledgeBase/KnowledgeBase.API/KnowledgeBase.API.csproj
+        ASSEMBLY: KnowledgeBase.API.dll
+    restart: unless-stopped
+    environment:
+      <<: [*jwt, *mongo, *groq]
+      # KB tự lắng nghe 5101 (REST) + 5102 (gRPC) qua ConfigureKestrel trong code
+      MongoDbSettings__DatabaseName: "IeltsKnowledgeBase"
+      MongoDbSettings__LexicalItemsCollectionName: "LexicalItems"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  practice:
+    build:
+      context: .
+      args:
+        PROJECT_PATH: src/Services/Practice/Practice.API/Practice.API.csproj
+        ASSEMBLY: Practice.API.dll
+    restart: unless-stopped
+    environment:
+      <<: [*jwt, *mongo, *groq]
+      ASPNETCORE_URLS: "http://+:5069"
+      MongoDbSettings__DatabaseName: "IeltsPractice"
+      MongoDbSettings__PassagesCollectionName: "GeneratedPassages"
+      MongoDbSettings__SpeakingCollectionName: "GeneratedSpeaking"
+      MongoDbSettings__EssaysCollectionName: "GeneratedEssays"
+      KnowledgeBase__GrpcUrl: "http://knowledgebase:5102"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      knowledgebase:
+        condition: service_started
+
+  review:
+    build:
+      context: .
+      args:
+        PROJECT_PATH: src/Services/Review/Review.API/Review.API.csproj
+        ASSEMBLY: Review.API.dll
+    restart: unless-stopped
+    environment:
+      <<: [*jwt, *mongo]
+      ASPNETCORE_URLS: "http://+:5070"
+      MongoDbSettings__DatabaseName: "IeltsReview"
+      MongoDbSettings__ReviewCardsCollectionName: "ReviewCards"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: .
+      args:
+        PROJECT_PATH: src/Gateway/ApiGateway/ApiGateway.csproj
+        ASSEMBLY: ApiGateway.dll
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_URLS: "http://+:5000"
+      ReverseProxy__Clusters__auth__Destinations__d1__Address: "http://auth:5072"
+      ReverseProxy__Clusters__knowledgebase__Destinations__d1__Address: "http://knowledgebase:5101"
+      ReverseProxy__Clusters__practice__Destinations__d1__Address: "http://practice:5069"
+      ReverseProxy__Clusters__review__Destinations__d1__Address: "http://review:5070"
+    ports:
+      - "5000:5000"          # CỔNG DUY NHẤT lộ ra internet
+    depends_on:
+      - auth
+      - knowledgebase
+      - practice
+      - review
+
+volumes:
+  mongo_data:
+  postgres_data:

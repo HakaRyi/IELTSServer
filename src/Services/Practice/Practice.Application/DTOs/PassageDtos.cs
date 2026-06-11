@@ -15,5 +15,6 @@ public class PassageResponse
     public string EnglishContent { get; set; } = null!;
     public string VietnameseTranslation { get; set; } = null!;
     public List<string> UsedLexicalItemIds { get; set; } = new();
+    public List<string> UsedVocabulary { get; set; } = new();
     public DateTime CreatedAt { get; set; }
 }
