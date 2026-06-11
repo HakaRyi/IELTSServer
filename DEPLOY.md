@@ -1,9 +1,54 @@
-# Deploy IELTS PKM Backend (miễn phí — Oracle Cloud Always Free)
+# Deploy IELTS PKM Backend
 
-Chạy toàn bộ hệ thống (5 service + Gateway + MongoDB + PostgreSQL) trong Docker
-trên 1 VM miễn phí, dùng được từ điện thoại ở bất kỳ đâu.
+Chạy toàn bộ hệ thống (5 service + Gateway + MongoDB + PostgreSQL) trong Docker,
+dùng được từ điện thoại ở bất kỳ đâu.
+
+- **Cách A — Cloudflare Tunnel (khuyến nghị, không cần thẻ):** chạy trên PC, có HTTPS, miễn phí. PC phải bật.
+- **Cách B — VM cloud (Oracle Always Free):** PC tắt được nhưng cần thẻ + tài khoản cloud.
+
+═══════════════════════════════════════════════════════════════════════════════
+# CÁCH A — Cloudflare Tunnel (không cần thẻ, có HTTPS)
+═══════════════════════════════════════════════════════════════════════════════
+
+Backend chạy bằng Docker trên PC của bạn; Cloudflare tạo URL HTTPS công khai trỏ về.
+
+### A1. Tạo file bí mật & chạy backend + tunnel (trên PC)
+
+```bash
+cd backend
+copy .env.example .env        # (Windows)   — rồi mở .env điền GROQ_API_KEY + mật khẩu
+docker compose -f docker-compose.prod.yml --profile tunnel up -d --build
+```
+
+### A2. Lấy URL công khai
+
+```bash
+docker compose -f docker-compose.prod.yml logs cloudflared
+```
+Tìm dòng dạng:  `https://<ngẫu-nhiên>.trycloudflare.com`  ← đây là URL backend của bạn.
+
+### A3. Nhập URL vào app (KHÔNG cần build lại)
+
+Mở app → màn **Đăng nhập** → nút **"Cấu hình server"** → dán URL `https://....trycloudflare.com` → Lưu.
+Xong! App dùng được mọi nơi miễn là PC đang bật.
+
+> ⚠️ URL quick-tunnel **đổi mỗi lần khởi động lại** cloudflared. Khi đổi, chỉ cần dán URL mới
+> vào app (nút Cấu hình server) — không phải build lại APK.
+> Muốn URL CỐ ĐỊNH: tạo tài khoản Cloudflare free + domain (DuckDNS) rồi dùng *named tunnel*.
+
+### A4. Cài app lên điện thoại thật
+
+```bash
+cd mobile/ielts_pkm
+flutter build apk --release
+# build/app/outputs/flutter-apk/app-release.apk → copy vào điện thoại, cài, mở, Cấu hình server
+```
 
 ---
+
+═══════════════════════════════════════════════════════════════════════════════
+# CÁCH B — Oracle Cloud Always Free (VM, cần thẻ)
+═══════════════════════════════════════════════════════════════════════════════
 
 ## 0. Chuẩn bị: push code mới lên GitHub
 

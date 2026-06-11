@@ -138,6 +138,18 @@ services:
       - practice
       - review
 
+  # ─── Cloudflare Tunnel (tùy chọn) ───────────────────────────────────────────
+  # Tạo URL HTTPS công khai trỏ về gateway, KHÔNG cần thẻ/tài khoản.
+  # Chạy kèm bằng:  docker compose -f docker-compose.prod.yml --profile tunnel up -d
+  # Xem URL công khai:  docker compose -f docker-compose.prod.yml logs cloudflared
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    profiles: ["tunnel"]
+    command: tunnel --no-autoupdate --url http://gateway:5000
+    depends_on:
+      - gateway
+
 volumes:
   mongo_data:
   postgres_data:
