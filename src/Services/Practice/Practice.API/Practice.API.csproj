@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Practice.Application\Practice.Application.csproj" />
     <ProjectReference Include="..\Practice.Infrastructure\Practice.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Shared.Core\Shared.Core.csproj" />
   </ItemGroup>
 
 </Project>

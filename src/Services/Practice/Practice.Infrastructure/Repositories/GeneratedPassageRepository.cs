@@ -22,19 +22,17 @@ public class GeneratedPassageRepository : IGeneratedPassageRepository
         return passage;
     }
 
-    public async Task<List<GeneratedPassage>> GetByTopicAsync(string topic)
-    {
-        return await _collection
-            .Find(p => p.Topic == topic)
+    public async Task<List<GeneratedPassage>> GetByTopicAsync(string userId, string topic)
+        => await _collection
+            .Find(p => p.UserId == userId && p.Topic == topic)
             .SortByDescending(p => p.CreatedAt)
             .ToListAsync();
-    }
 
-    public async Task<GeneratedPassage?> GetByIdAsync(string id)
-        => await _collection.Find(p => p.Id == id).FirstOrDefaultAsync();
+    public async Task<GeneratedPassage?> GetByIdAsync(string userId, string id)
+        => await _collection.Find(p => p.Id == id && p.UserId == userId).FirstOrDefaultAsync();
 
-    public async Task<List<GeneratedPassage>> GetRecentAsync(int limit)
-        => await _collection.Find(_ => true)
+    public async Task<List<GeneratedPassage>> GetRecentAsync(string userId, int limit)
+        => await _collection.Find(p => p.UserId == userId)
             .SortByDescending(p => p.CreatedAt)
             .Limit(limit)
             .ToListAsync();

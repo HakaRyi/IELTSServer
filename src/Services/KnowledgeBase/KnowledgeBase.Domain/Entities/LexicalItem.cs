@@ -9,6 +9,9 @@ public class LexicalItem
     [BsonRepresentation(BsonType.ObjectId)]
     public string Id { get; set; } = null!;
 
+    /// <summary>Chủ sở hữu — userId từ JWT (Auth service).</summary>
+    public string UserId { get; set; } = null!;
+
     public string Value { get; set; } = null!;
 
     public string Type { get; set; } = null!;

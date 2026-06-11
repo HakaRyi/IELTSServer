@@ -18,11 +18,11 @@ public class LexicalItemRepository : ILexicalItemRepository
         _collection = database.GetCollection<LexicalItem>(settings.Value.LexicalItemsCollectionName);
     }
 
-    public async Task<List<LexicalItem>> GetAllAsync() =>
-        await _collection.Find(_ => true).ToListAsync();
+    public async Task<List<LexicalItem>> GetAllAsync(string userId) =>
+        await _collection.Find(x => x.UserId == userId).ToListAsync();
 
-    public async Task<LexicalItem?> GetByIdAsync(string id) =>
-        await _collection.Find(x => x.Id == id).FirstOrDefaultAsync();
+    public async Task<LexicalItem?> GetByIdAsync(string userId, string id) =>
+        await _collection.Find(x => x.Id == id && x.UserId == userId).FirstOrDefaultAsync();
 
     public async Task CreateAsync(LexicalItem item) =>
         await _collection.InsertOneAsync(item);
@@ -30,22 +30,28 @@ public class LexicalItemRepository : ILexicalItemRepository
     public async Task UpdateAsync(string id, LexicalItem item) =>
         await _collection.ReplaceOneAsync(x => x.Id == id, item);
 
-    public async Task DeleteAsync(string id) =>
-        await _collection.DeleteOneAsync(x => x.Id == id);
+    public async Task DeleteAsync(string userId, string id) =>
+        await _collection.DeleteOneAsync(x => x.Id == id && x.UserId == userId);
 
-    public async Task<LexicalItem?> GetByValueAsync(string value)
+    public async Task<LexicalItem?> GetByValueAsync(string userId, string value)
     {
-        var filter = Builders<LexicalItem>.Filter.Regex(
-            x => x.Value,
-            new BsonRegularExpression($"^{Regex.Escape(value)}$", "i"));
+        var filter = Builders<LexicalItem>.Filter.And(
+            Builders<LexicalItem>.Filter.Eq(x => x.UserId, userId),
+            Builders<LexicalItem>.Filter.Regex(
+                x => x.Value,
+                new BsonRegularExpression($"^{Regex.Escape(value)}$", "i")));
         return await _collection.Find(filter).FirstOrDefaultAsync();
     }
 
-    public async Task<(List<LexicalItem> Items, long Total)> GetPagedAsync(string? topic, int page, int pageSize)
+    public async Task<(List<LexicalItem> Items, long Total)> GetPagedAsync(
+        string userId, string? topic, int page, int pageSize)
     {
+        var byUser = Builders<LexicalItem>.Filter.Eq(x => x.UserId, userId);
         var filter = string.IsNullOrWhiteSpace(topic)
-            ? Builders<LexicalItem>.Filter.Empty
-            : Builders<LexicalItem>.Filter.AnyEq(x => x.Topics, topic);
+            ? byUser
+            : Builders<LexicalItem>.Filter.And(
+                byUser,
+                Builders<LexicalItem>.Filter.AnyEq(x => x.Topics, topic));
 
         var total = await _collection.CountDocumentsAsync(filter);
         var items = await _collection.Find(filter)
@@ -56,17 +62,20 @@ public class LexicalItemRepository : ILexicalItemRepository
         return (items, total);
     }
 
-    public async Task<List<string>> GetDistinctTopicsAsync()
+    public async Task<List<string>> GetDistinctTopicsAsync(string userId)
     {
-        var topics = await _collection.Distinct<string>("Topics", FilterDefinition<LexicalItem>.Empty).ToListAsync();
+        var filter = Builders<LexicalItem>.Filter.Eq(x => x.UserId, userId);
+        var topics = await _collection.Distinct<string>("Topics", filter).ToListAsync();
         return topics.OrderBy(t => t).ToList();
     }
 
-    public async Task<List<LexicalItem>> SearchByPrefixAsync(string prefix, int limit)
+    public async Task<List<LexicalItem>> SearchByPrefixAsync(string userId, string prefix, int limit)
     {
-        var filter = Builders<LexicalItem>.Filter.Regex(
-            x => x.Value,
-            new BsonRegularExpression($"^{Regex.Escape(prefix)}", "i"));
+        var filter = Builders<LexicalItem>.Filter.And(
+            Builders<LexicalItem>.Filter.Eq(x => x.UserId, userId),
+            Builders<LexicalItem>.Filter.Regex(
+                x => x.Value,
+                new BsonRegularExpression($"^{Regex.Escape(prefix)}", "i")));
         return await _collection.Find(filter)
             .SortBy(x => x.Value)
             .Limit(limit)

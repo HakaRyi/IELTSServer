@@ -8,27 +8,29 @@ public class PassageService : IPassageService
 {
     private readonly IGeneratedPassageRepository _repository;
     private readonly ILexicalVaultClient _vaultClient;
-    private readonly IGeminiService _geminiService;
+    private readonly ILlmService _llm;
 
     public PassageService(
         IGeneratedPassageRepository repository,
         ILexicalVaultClient vaultClient,
-        IGeminiService geminiService)
+        ILlmService llm)
     {
         _repository = repository;
         _vaultClient = vaultClient;
-        _geminiService = geminiService;
+        _llm = llm;
     }
 
-    public async Task<PassageResponse> GenerateAndSavePassageAsync(GeneratePassageRequest request)
+    public async Task<PassageResponse> GenerateAndSavePassageAsync(
+        string userId, GeneratePassageRequest request)
     {
-        var words = await _vaultClient.GetWordValuesByIdsAsync(request.LexicalItemIds);
+        var words = await _vaultClient.GetWordValuesByIdsAsync(userId, request.LexicalItemIds);
 
-        var (english, vietnamese) = await _geminiService.GenerateEssayAsync(
+        var (english, vietnamese) = await _llm.GenerateEssayAsync(
             request.Topic, request.TargetBand, words);
 
         var passage = new GeneratedPassage
         {
+            UserId = userId,
             Topic = request.Topic,
             TargetBand = request.TargetBand,
             EnglishContent = english,
@@ -40,15 +42,15 @@ public class PassageService : IPassageService
         return ToResponse(passage);
     }
 
-    public async Task<List<PassageResponse>> GetPassagesByTopicAsync(string topic)
+    public async Task<List<PassageResponse>> GetPassagesByTopicAsync(string userId, string topic)
     {
-        var passages = await _repository.GetByTopicAsync(topic);
+        var passages = await _repository.GetByTopicAsync(userId, topic);
         return passages.Select(ToResponse).ToList();
     }
 
-    public async Task<List<PassageResponse>> GetRecentAsync(int limit)
+    public async Task<List<PassageResponse>> GetRecentAsync(string userId, int limit)
     {
-        var passages = await _repository.GetRecentAsync(limit);
+        var passages = await _repository.GetRecentAsync(userId, limit);
         return passages.Select(ToResponse).ToList();
     }
 

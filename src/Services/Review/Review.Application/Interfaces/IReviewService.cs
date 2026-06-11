@@ -4,10 +4,10 @@ namespace Review.Application.Interfaces;
 
 public interface IReviewService
 {
-    Task<ReviewCardDto> EnrollAsync(EnrollRequest request);
-    Task<List<ReviewCardDto>> GetDueAsync();
-    Task<ReviewCardDto> RateAsync(string cardId, int quality);
-    Task<StatsDto> GetStatsAsync();
-    Task<List<ReviewCardDto>> GetAllAsync();
-    Task DeleteAsync(string cardId);
+    Task<ReviewCardDto> EnrollAsync(string userId, EnrollRequest request);
+    Task<List<ReviewCardDto>> GetDueAsync(string userId);
+    Task<ReviewCardDto> RateAsync(string userId, string cardId, int quality);
+    Task<StatsDto> GetStatsAsync(string userId);
+    Task<List<ReviewCardDto>> GetAllAsync(string userId);
+    Task DeleteAsync(string userId, string cardId);
 }

@@ -22,19 +22,17 @@ public class SpeakingRepository : ISpeakingRepository
         return speaking;
     }
 
-    public async Task<List<GeneratedSpeaking>> GetByTopicAsync(string topic)
-    {
-        return await _collection
-            .Find(s => s.Topic == topic)
+    public async Task<List<GeneratedSpeaking>> GetByTopicAsync(string userId, string topic)
+        => await _collection
+            .Find(s => s.UserId == userId && s.Topic == topic)
             .SortByDescending(s => s.CreatedAt)
             .ToListAsync();
-    }
 
-    public async Task<GeneratedSpeaking?> GetByIdAsync(string id)
-        => await _collection.Find(s => s.Id == id).FirstOrDefaultAsync();
+    public async Task<GeneratedSpeaking?> GetByIdAsync(string userId, string id)
+        => await _collection.Find(s => s.Id == id && s.UserId == userId).FirstOrDefaultAsync();
 
-    public async Task<List<GeneratedSpeaking>> GetRecentAsync(int limit)
-        => await _collection.Find(_ => true)
+    public async Task<List<GeneratedSpeaking>> GetRecentAsync(string userId, int limit)
+        => await _collection.Find(s => s.UserId == userId)
             .SortByDescending(s => s.CreatedAt)
             .Limit(limit)
             .ToListAsync();

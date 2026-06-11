@@ -12,5 +12,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Review.Application\Review.Application.csproj" />
     <ProjectReference Include="..\Review.Infrastructure\Review.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Shared.Core\Shared.Core.csproj" />
   </ItemGroup>
 </Project>

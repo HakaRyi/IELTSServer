@@ -14,9 +14,9 @@ public class LexicalGrpcService : LexicalVault.LexicalVaultBase
     }
 
     public override async Task<LexicalListResponse> GetAllLexicalItems(
-        EmptyRequest request, ServerCallContext context)
+        GetLexicalRequest request, ServerCallContext context)
     {
-        var items = await _service.GetAllAsync();
+        var items = await _service.GetAllAsync(request.UserId);
         var response = new LexicalListResponse();
 
         foreach (var item in items)

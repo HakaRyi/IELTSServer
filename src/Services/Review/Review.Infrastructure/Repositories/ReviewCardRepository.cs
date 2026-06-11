@@ -22,31 +22,32 @@ public class ReviewCardRepository : IReviewCardRepository
         return card;
     }
 
-    public Task<ReviewCard?> GetByIdAsync(string id)
-        => _col.Find(c => c.Id == id).FirstOrDefaultAsync()!;
+    public Task<ReviewCard?> GetByIdAsync(string userId, string id)
+        => _col.Find(c => c.Id == id && c.UserId == userId).FirstOrDefaultAsync()!;
 
-    public Task<ReviewCard?> GetByLexicalItemIdAsync(string lexicalItemId)
-        => _col.Find(c => c.LexicalItemId == lexicalItemId).FirstOrDefaultAsync()!;
+    public Task<ReviewCard?> GetByLexicalItemIdAsync(string userId, string lexicalItemId)
+        => _col.Find(c => c.UserId == userId && c.LexicalItemId == lexicalItemId)
+            .FirstOrDefaultAsync()!;
 
     public Task UpdateAsync(ReviewCard card)
         => _col.ReplaceOneAsync(c => c.Id == card.Id, card);
 
-    public Task DeleteAsync(string id)
-        => _col.DeleteOneAsync(c => c.Id == id);
+    public Task DeleteAsync(string userId, string id)
+        => _col.DeleteOneAsync(c => c.Id == id && c.UserId == userId);
 
-    public async Task<List<ReviewCard>> GetDueAsync(DateTime asOf)
-        => await _col.Find(c => c.NextReviewAt <= asOf)
+    public async Task<List<ReviewCard>> GetDueAsync(string userId, DateTime asOf)
+        => await _col.Find(c => c.UserId == userId && c.NextReviewAt <= asOf)
             .SortBy(c => c.NextReviewAt)
             .ToListAsync();
 
-    public async Task<List<ReviewCard>> GetAllAsync()
-        => await _col.Find(_ => true)
+    public async Task<List<ReviewCard>> GetAllAsync(string userId)
+        => await _col.Find(c => c.UserId == userId)
             .SortByDescending(c => c.EnrolledAt)
             .ToListAsync();
 
-    public async Task<(int Total, int Due, int Mastered)> GetStatsAsync(DateTime asOf)
+    public async Task<(int Total, int Due, int Mastered)> GetStatsAsync(string userId, DateTime asOf)
     {
-        var all = await _col.Find(_ => true).ToListAsync();
+        var all = await _col.Find(c => c.UserId == userId).ToListAsync();
         int total = all.Count;
         int due = all.Count(c => c.NextReviewAt <= asOf);
         int mastered = all.Count(c => c.Interval >= 21);

@@ -5,7 +5,7 @@ namespace Practice.Application.Interfaces;
 public interface IGeneratedPassageRepository
 {
     Task<GeneratedPassage> CreateAsync(GeneratedPassage passage);
-    Task<List<GeneratedPassage>> GetByTopicAsync(string topic);
-    Task<GeneratedPassage?> GetByIdAsync(string id);
-    Task<List<GeneratedPassage>> GetRecentAsync(int limit);
+    Task<List<GeneratedPassage>> GetByTopicAsync(string userId, string topic);
+    Task<GeneratedPassage?> GetByIdAsync(string userId, string id);
+    Task<List<GeneratedPassage>> GetRecentAsync(string userId, int limit);
 }

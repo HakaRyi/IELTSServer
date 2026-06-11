@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Review.Application.DTOs;
 using Review.Application.Interfaces;
+using Shared.Core.Authentication;
 
 namespace Review.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/review")]
 public class ReviewController : ControllerBase
@@ -11,26 +14,25 @@ public class ReviewController : ControllerBase
     private readonly IReviewService _service;
     public ReviewController(IReviewService service) => _service = service;
 
-    // POST /api/review/enroll
+    private string UserId => User.GetRequiredUserId();
+
     [HttpPost("enroll")]
     public async Task<IActionResult> Enroll([FromBody] EnrollRequest request)
     {
-        var card = await _service.EnrollAsync(request);
+        var card = await _service.EnrollAsync(UserId, request);
         return Ok(card);
     }
 
-    // GET /api/review/due
     [HttpGet("due")]
     public async Task<IActionResult> GetDue()
-        => Ok(await _service.GetDueAsync());
+        => Ok(await _service.GetDueAsync(UserId));
 
-    // POST /api/review/{cardId}/rate
     [HttpPost("{cardId}/rate")]
     public async Task<IActionResult> Rate(string cardId, [FromBody] RateRequest request)
     {
         try
         {
-            var card = await _service.RateAsync(cardId, request.Quality);
+            var card = await _service.RateAsync(UserId, cardId, request.Quality);
             return Ok(card);
         }
         catch (KeyNotFoundException e)
@@ -39,21 +41,18 @@ public class ReviewController : ControllerBase
         }
     }
 
-    // GET /api/review/stats
     [HttpGet("stats")]
     public async Task<IActionResult> Stats()
-        => Ok(await _service.GetStatsAsync());
+        => Ok(await _service.GetStatsAsync(UserId));
 
-    // GET /api/review/all
     [HttpGet("all")]
     public async Task<IActionResult> GetAll()
-        => Ok(await _service.GetAllAsync());
+        => Ok(await _service.GetAllAsync(UserId));
 
-    // DELETE /api/review/{cardId}
     [HttpDelete("{cardId}")]
     public async Task<IActionResult> Delete(string cardId)
     {
-        await _service.DeleteAsync(cardId);
+        await _service.DeleteAsync(UserId, cardId);
         return NoContent();
     }
 }

@@ -5,10 +5,12 @@ option csharp_namespace = "KnowledgeBase.API.Grpc";
 package lexical;
 
 service LexicalVault {
-  rpc GetAllLexicalItems (EmptyRequest) returns (LexicalListResponse);
+  rpc GetAllLexicalItems (GetLexicalRequest) returns (LexicalListResponse);
 }
 
-message EmptyRequest {}
+message GetLexicalRequest {
+  string user_id = 1;
+}
 
 message LexicalItemMessage {
   string id = 1;

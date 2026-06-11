@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   mongodb:
@@ -25,5 +25,30 @@ services:
     depends_on:
       - mongodb
 
+  postgres:
+    image: postgres:16
+    container_name: ielts_postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: "110521"
+      POSTGRES_DB: IeltsAuth
+    ports:
+      - "5433:5432"   # host 5433 -> tránh đụng PostgreSQL cài native trên Windows (5432)
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: ielts_pgadmin
+    restart: always
+    ports:
+      - "8082:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@ielts.local
+      PGADMIN_DEFAULT_PASSWORD: P@ssw0rd!
+    depends_on:
+      - postgres
+
 volumes:
   mongodb_data:
+  postgres_data:

@@ -9,6 +9,8 @@ public class ReviewCard
     [BsonRepresentation(BsonType.ObjectId)]
     public string Id { get; set; } = null!;
 
+    public string UserId { get; set; } = null!;
+
     public string LexicalItemId { get; set; } = null!;
 
     // Snapshot để hiển thị offline, không cần gọi KnowledgeBase mỗi lần

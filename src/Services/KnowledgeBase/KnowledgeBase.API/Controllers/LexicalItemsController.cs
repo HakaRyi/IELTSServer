@@ -1,9 +1,12 @@
 using KnowledgeBase.Application.DTOs;
 using KnowledgeBase.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Core.Authentication;
 
 namespace KnowledgeBase.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/lexical")]
 public class LexicalItemsController : ControllerBase
@@ -15,6 +18,8 @@ public class LexicalItemsController : ControllerBase
         _service = service;
     }
 
+    private string UserId => User.GetRequiredUserId();
+
     // GET /api/lexical/lookup?word=resilient
     [HttpGet("lookup")]
     public async Task<IActionResult> Lookup([FromQuery] string word)
@@ -22,7 +27,7 @@ public class LexicalItemsController : ControllerBase
         if (string.IsNullOrWhiteSpace(word))
             return BadRequest("Word is required.");
 
-        var result = await _service.LookupAsync(word.Trim());
+        var result = await _service.LookupAsync(UserId, word.Trim());
         return Ok(result);
     }
 
@@ -30,9 +35,9 @@ public class LexicalItemsController : ControllerBase
     [HttpGet("suggest")]
     public async Task<IActionResult> Suggest([FromQuery] string q, [FromQuery] int limit = 8)
     {
-        if (string.IsNullOrWhiteSpace(q) || q.Length < 1)
+        if (string.IsNullOrWhiteSpace(q))
             return Ok(Array.Empty<object>());
-        var result = await _service.SearchAsync(q, Math.Clamp(limit, 1, 20));
+        var result = await _service.SearchAsync(UserId, q, Math.Clamp(limit, 1, 20));
         return Ok(result);
     }
 
@@ -43,7 +48,7 @@ public class LexicalItemsController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
-        var result = await _service.GetVaultAsync(topic, page, pageSize);
+        var result = await _service.GetVaultAsync(UserId, topic, page, pageSize);
         return Ok(result);
     }
 
@@ -51,7 +56,7 @@ public class LexicalItemsController : ControllerBase
     [HttpGet("topics")]
     public async Task<IActionResult> GetTopics()
     {
-        var topics = await _service.GetTopicsAsync();
+        var topics = await _service.GetTopicsAsync(UserId);
         return Ok(topics);
     }
 
@@ -59,7 +64,7 @@ public class LexicalItemsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(string id)
     {
-        var item = await _service.GetByIdAsync(id);
+        var item = await _service.GetByIdAsync(UserId, id);
         return item == null ? NotFound() : Ok(item);
     }
 
@@ -67,7 +72,7 @@ public class LexicalItemsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateLexicalItemRequest request)
     {
-        var item = await _service.CreateAsync(request);
+        var item = await _service.CreateAsync(UserId, request);
         return CreatedAtAction(nameof(GetById), new { id = item.Id }, item);
     }
 
@@ -75,7 +80,7 @@ public class LexicalItemsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(string id, [FromBody] UpdateLexicalItemRequest request)
     {
-        var ok = await _service.UpdateAsync(id, request);
+        var ok = await _service.UpdateAsync(UserId, id, request);
         return ok ? NoContent() : NotFound();
     }
 
@@ -83,7 +88,7 @@ public class LexicalItemsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {
-        var ok = await _service.DeleteAsync(id);
+        var ok = await _service.DeleteAsync(UserId, id);
         return ok ? NoContent() : NotFound();
     }
 }

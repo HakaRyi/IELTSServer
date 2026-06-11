@@ -8,30 +8,31 @@ public class SpeakingService : ISpeakingService
 {
     private readonly ISpeakingRepository _repository;
     private readonly ILexicalVaultClient _vaultClient;
-    private readonly IGeminiService _geminiService;
+    private readonly ILlmService _llm;
 
     public SpeakingService(
         ISpeakingRepository repository,
         ILexicalVaultClient vaultClient,
-        IGeminiService geminiService)
+        ILlmService llm)
     {
         _repository = repository;
         _vaultClient = vaultClient;
-        _geminiService = geminiService;
+        _llm = llm;
     }
 
-    public async Task<SpeakingResponse> GenerateAndSaveAsync(GenerateSpeakingRequest request)
+    public async Task<SpeakingResponse> GenerateAndSaveAsync(
+        string userId, GenerateSpeakingRequest request)
     {
-        // Nếu client truyền danh sách từ rỗng thì lấy từ vault theo chủ đề (tất cả)
         var words = request.VocabularyWords.Count > 0
             ? request.VocabularyWords
-            : await _vaultClient.GetWordValuesByTopicAsync(request.Topic);
+            : await _vaultClient.GetWordValuesByTopicAsync(userId, request.Topic);
 
-        var geminiResult = await _geminiService.GenerateSpeakingAsync(
+        var geminiResult = await _llm.GenerateSpeakingAsync(
             request.Topic, request.TargetBand, words);
 
         var entity = new GeneratedSpeaking
         {
+            UserId = userId,
             Topic = request.Topic,
             TargetBand = request.TargetBand,
             Part1 = geminiResult.Part1.Select(q => new SpeakingQA
@@ -51,15 +52,15 @@ public class SpeakingService : ISpeakingService
         return ToResponse(entity);
     }
 
-    public async Task<List<SpeakingResponse>> GetByTopicAsync(string topic)
+    public async Task<List<SpeakingResponse>> GetByTopicAsync(string userId, string topic)
     {
-        var list = await _repository.GetByTopicAsync(topic);
+        var list = await _repository.GetByTopicAsync(userId, topic);
         return list.Select(ToResponse).ToList();
     }
 
-    public async Task<List<SpeakingResponse>> GetRecentAsync(int limit)
+    public async Task<List<SpeakingResponse>> GetRecentAsync(string userId, int limit)
     {
-        var list = await _repository.GetRecentAsync(limit);
+        var list = await _repository.GetRecentAsync(userId, limit);
         return list.Select(ToResponse).ToList();
     }
 

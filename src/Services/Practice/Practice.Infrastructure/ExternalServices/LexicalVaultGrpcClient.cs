@@ -12,9 +12,10 @@ public class LexicalVaultGrpcClient : ILexicalVaultClient
         _client = client;
     }
 
-    public async Task<List<string>> GetWordValuesByIdsAsync(List<string> ids)
+    public async Task<List<string>> GetWordValuesByIdsAsync(string userId, List<string> ids)
     {
-        var response = await _client.GetAllLexicalItemsAsync(new EmptyRequest());
+        var response = await _client.GetAllLexicalItemsAsync(
+            new GetLexicalRequest { UserId = userId });
         var idSet = new HashSet<string>(ids);
         return response.Items
             .Where(i => idSet.Contains(i.Id))
@@ -22,9 +23,10 @@ public class LexicalVaultGrpcClient : ILexicalVaultClient
             .ToList();
     }
 
-    public async Task<List<string>> GetWordValuesByTopicAsync(string topic)
+    public async Task<List<string>> GetWordValuesByTopicAsync(string userId, string topic)
     {
-        var response = await _client.GetAllLexicalItemsAsync(new EmptyRequest());
+        var response = await _client.GetAllLexicalItemsAsync(
+            new GetLexicalRequest { UserId = userId });
         return response.Items
             .Where(i => string.IsNullOrEmpty(topic) ||
                         i.Topics.Any(t => t.Equals(topic, StringComparison.OrdinalIgnoreCase)))

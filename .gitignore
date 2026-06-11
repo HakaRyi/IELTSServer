@@ -370,3 +370,10 @@ Presentation/appsettings.Development.json
 appsettings.Development.json
 /Infrastructure/Migrations
 /Fashion_BackEnd_Solution.sln
+
+# === IELTS PKM: chặn appsettings chứa secret (Groq key, JWT, mật khẩu DB) ===
+# Chỉ commit appsettings.Example.json làm mẫu.
+appsettings.json
+appsettings.Development.json
+appsettings.Production.json
+!appsettings.Example.json

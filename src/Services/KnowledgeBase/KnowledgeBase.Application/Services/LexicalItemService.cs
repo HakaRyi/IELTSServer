@@ -8,18 +8,18 @@ namespace KnowledgeBase.Application.Services;
 public class LexicalItemService : ILexicalItemService
 {
     private readonly ILexicalItemRepository _repository;
-    private readonly IGeminiService _gemini;
+    private readonly ILlmService _llm;
 
-    public LexicalItemService(ILexicalItemRepository repository, IGeminiService gemini)
+    public LexicalItemService(ILexicalItemRepository repository, ILlmService llm)
     {
         _repository = repository;
-        _gemini = gemini;
+        _llm = llm;
     }
 
-    public async Task<LookupResultDto> LookupAsync(string word)
+    public async Task<LookupResultDto> LookupAsync(string userId, string word)
     {
-        // 1. Tìm trong kho trước
-        var existing = await _repository.GetByValueAsync(word);
+        // 1. Tìm trong kho của user trước
+        var existing = await _repository.GetByValueAsync(userId, word);
         if (existing != null)
         {
             return new LookupResultDto
@@ -31,7 +31,7 @@ public class LexicalItemService : ILexicalItemService
         }
 
         // 2. Chưa có → nhờ Gemini phân tích (chưa lưu)
-        var analysis = await _gemini.AnalyzeWordAsync(word);
+        var analysis = await _llm.AnalyzeWordAsync(word);
         return new LookupResultDto
         {
             Source = "generated",
@@ -40,12 +40,13 @@ public class LexicalItemService : ILexicalItemService
         };
     }
 
-    public async Task<PagedResult<LexicalItem>> GetVaultAsync(string? topic, int page, int pageSize)
+    public async Task<PagedResult<LexicalItem>> GetVaultAsync(
+        string userId, string? topic, int page, int pageSize)
     {
         if (page < 1) page = 1;
         if (pageSize < 1 || pageSize > 100) pageSize = 20;
 
-        var (items, total) = await _repository.GetPagedAsync(topic, page, pageSize);
+        var (items, total) = await _repository.GetPagedAsync(userId, topic, page, pageSize);
         return new PagedResult<LexicalItem>
         {
             Items = items,
@@ -55,14 +56,17 @@ public class LexicalItemService : ILexicalItemService
         };
     }
 
-    public Task<List<string>> GetTopicsAsync() => _repository.GetDistinctTopicsAsync();
+    public Task<List<string>> GetTopicsAsync(string userId)
+        => _repository.GetDistinctTopicsAsync(userId);
 
-    public Task<LexicalItem?> GetByIdAsync(string id) => _repository.GetByIdAsync(id);
+    public Task<LexicalItem?> GetByIdAsync(string userId, string id)
+        => _repository.GetByIdAsync(userId, id);
 
-    public async Task<LexicalItem> CreateAsync(CreateLexicalItemRequest request)
+    public async Task<LexicalItem> CreateAsync(string userId, CreateLexicalItemRequest request)
     {
         var item = new LexicalItem
         {
+            UserId = userId,
             Value = request.Value,
             Type = request.Type,
             Topics = request.Topics,
@@ -81,9 +85,9 @@ public class LexicalItemService : ILexicalItemService
         return item;
     }
 
-    public async Task<bool> UpdateAsync(string id, UpdateLexicalItemRequest request)
+    public async Task<bool> UpdateAsync(string userId, string id, UpdateLexicalItemRequest request)
     {
-        var existing = await _repository.GetByIdAsync(id);
+        var existing = await _repository.GetByIdAsync(userId, id);
         if (existing == null) return false;
 
         existing.Value = request.Value;
@@ -103,13 +107,28 @@ public class LexicalItemService : ILexicalItemService
         return true;
     }
 
-    public async Task<bool> DeleteAsync(string id)
+    public async Task<bool> DeleteAsync(string userId, string id)
     {
-        var existing = await _repository.GetByIdAsync(id);
+        var existing = await _repository.GetByIdAsync(userId, id);
         if (existing == null) return false;
 
-        await _repository.DeleteAsync(id);
+        await _repository.DeleteAsync(userId, id);
         return true;
+    }
+
+    public Task<List<LexicalItem>> GetAllAsync(string userId)
+        => _repository.GetAllAsync(userId);
+
+    public async Task<List<SuggestItemDto>> SearchAsync(string userId, string prefix, int limit)
+    {
+        var items = await _repository.SearchByPrefixAsync(userId, prefix.Trim(), limit);
+        return items.Select(i => new SuggestItemDto
+        {
+            Id = i.Id,
+            Value = i.Value,
+            Type = i.Type,
+            Topics = i.Topics
+        }).ToList();
     }
 
     private static WordAnalysisDto MapToAnalysisDto(LexicalItem item) => new()
@@ -126,18 +145,4 @@ public class LexicalItemService : ILexicalItemService
             Examples = m.Examples
         }).ToList()
     };
-
-    public Task<List<LexicalItem>> GetAllAsync() => _repository.GetAllAsync();
-
-    public async Task<List<SuggestItemDto>> SearchAsync(string prefix, int limit)
-    {
-        var items = await _repository.SearchByPrefixAsync(prefix.Trim(), limit);
-        return items.Select(i => new SuggestItemDto
-        {
-            Id = i.Id,
-            Value = i.Value,
-            Type = i.Type,
-            Topics = i.Topics
-        }).ToList();
-    }
 }

@@ -3,6 +3,7 @@ using Review.Application.Interfaces;
 using Review.Application.Services;
 using Review.Infrastructure.Repositories;
 using Review.Infrastructure.Settings;
+using Shared.Core.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,8 @@ builder.Services.AddSingleton<IMongoClient>(_ =>
 
 builder.Services.AddScoped<IReviewCardRepository, ReviewCardRepository>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+
+builder.Services.AddIeltsJwtAuth(builder.Configuration);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -28,5 +31,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 app.Run();
