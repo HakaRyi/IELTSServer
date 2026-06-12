@@ -24,23 +24,29 @@ public class GroqService : ILlmService
 
     public async Task<WordAnalysisDto> AnalyzeWordAsync(string word)
     {
-        var prompt = $@"Analyze the English word ""{word}"" for an IELTS learner.
+        var prompt = $@"Analyze the English word or phrase ""{word}"" for an IELTS learner.
 Return a JSON object with this exact shape:
 {{
-  ""value"": ""the base form of the word"",
-  ""type"": ""noun | verb | adjective | adverb | phrase"",
-  ""topics"": [""2-4 IELTS topics this word commonly belongs to, e.g. Environment, Technology""],
+  ""value"": ""the base form of the word or phrase"",
+  ""type"": ""noun | verb | adjective | adverb | phrase | idiom | collocation"",
+  ""topics"": [""2-4 IELTS topics it commonly belongs to, e.g. Environment, Technology""],
   ""meanings"": [
     {{
       ""definition"": ""a clear definition in English, followed by ' — ' and the Vietnamese translation"",
       ""connotation"": ""Neutral | Positive | Negative | Formal | Informal"",
+      ""intensity"": 3,
+      ""intensityNote"": ""short Vietnamese note comparing the strength/nuance with near-synonyms, e.g. for 'be obsessed with': 'Cực kỳ mạnh — thang độ: like (2) < love (3) < adore (4) < be obsessed with (5), mang sắc thái ám ảnh, có thể tiêu cực'"",
       ""examples"": [""one natural example sentence""]
     }}
   ],
   ""synonyms"": [""up to 4 synonyms""],
   ""antonyms"": [""up to 4 antonyms""]
 }}
-If the word has different meanings across topics, include multiple objects in 'meanings'.";
+Rules:
+- intensity is an integer 1-5 measuring how strong/emphatic the expression is (1 = very mild, 3 = neutral strength, 5 = extremely strong).
+- intensityNote MUST compare with 2-3 near-synonyms on a scale so the learner feels the nuance, written in Vietnamese.
+- If the input is a multi-word phrase/idiom, analyze it as a whole unit.
+- If it has different meanings across topics, include multiple objects in 'meanings'.";
 
         var json = await CallGroqAsync(prompt);
 

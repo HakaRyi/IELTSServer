@@ -55,6 +55,7 @@ public class LexicalItemRepository : ILexicalItemRepository
 
         var total = await _collection.CountDocumentsAsync(filter);
         var items = await _collection.Find(filter)
+            .SortByDescending(x => x.CreatedAt)   // mới tra lên trước (nhóm theo ngày)
             .Skip((page - 1) * pageSize)
             .Limit(pageSize)
             .ToListAsync();
@@ -67,6 +68,26 @@ public class LexicalItemRepository : ILexicalItemRepository
         var filter = Builders<LexicalItem>.Filter.Eq(x => x.UserId, userId);
         var topics = await _collection.Distinct<string>("Topics", filter).ToListAsync();
         return topics.OrderBy(t => t).ToList();
+    }
+
+    public async Task<List<(string Topic, long Count)>> GetTopicStatsAsync(string userId)
+    {
+        // unwind Topics → group đếm số từ mỗi chủ đề
+        var pipeline = new[]
+        {
+            new BsonDocument("$match", new BsonDocument("UserId", userId)),
+            new BsonDocument("$unwind", "$Topics"),
+            new BsonDocument("$group", new BsonDocument
+            {
+                { "_id", "$Topics" },
+                { "count", new BsonDocument("$sum", 1) }
+            }),
+            new BsonDocument("$sort", new BsonDocument("count", -1))
+        };
+        var docs = await _collection.Aggregate<BsonDocument>(pipeline).ToListAsync();
+        return docs
+            .Select(d => (d["_id"].AsString, d["count"].ToInt64()))
+            .ToList();
     }
 
     public async Task<List<LexicalItem>> SearchByPrefixAsync(string userId, string prefix, int limit)

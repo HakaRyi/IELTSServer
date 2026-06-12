@@ -15,6 +15,9 @@ public class MeaningDto
 {
     public string Definition { get; set; } = null!;
     public string Connotation { get; set; } = "Neutral";
+    /// <summary>Độ mạnh sắc thái 1-5 (vd: like=2, love=4, be obsessed with=5).</summary>
+    public int Intensity { get; set; }
+    public string IntensityNote { get; set; } = string.Empty;
     public List<string> Examples { get; set; } = new();
 }
 
@@ -39,6 +42,13 @@ public class CreateLexicalItemRequest
 }
 
 public class UpdateLexicalItemRequest : CreateLexicalItemRequest { }
+
+// Thống kê số từ theo chủ đề (cho tab Chủ đề)
+public class TopicStatDto
+{
+    public string Topic { get; set; } = null!;
+    public long Count { get; set; }
+}
 
 // Gợi ý từ khi search
 public class SuggestItemDto

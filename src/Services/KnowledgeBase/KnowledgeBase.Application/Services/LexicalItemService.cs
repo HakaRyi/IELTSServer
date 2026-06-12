@@ -59,6 +59,12 @@ public class LexicalItemService : ILexicalItemService
     public Task<List<string>> GetTopicsAsync(string userId)
         => _repository.GetDistinctTopicsAsync(userId);
 
+    public async Task<List<TopicStatDto>> GetTopicStatsAsync(string userId)
+    {
+        var stats = await _repository.GetTopicStatsAsync(userId);
+        return stats.Select(s => new TopicStatDto { Topic = s.Topic, Count = s.Count }).ToList();
+    }
+
     public Task<LexicalItem?> GetByIdAsync(string userId, string id)
         => _repository.GetByIdAsync(userId, id);
 
@@ -77,6 +83,8 @@ public class LexicalItemService : ILexicalItemService
             {
                 Definition = m.Definition,
                 Connotation = m.Connotation,
+                Intensity = m.Intensity,
+                IntensityNote = m.IntensityNote,
                 Examples = m.Examples
             }).ToList()
         };
@@ -100,6 +108,8 @@ public class LexicalItemService : ILexicalItemService
         {
             Definition = m.Definition,
             Connotation = m.Connotation,
+            Intensity = m.Intensity,
+            IntensityNote = m.IntensityNote,
             Examples = m.Examples
         }).ToList();
 
@@ -142,6 +152,8 @@ public class LexicalItemService : ILexicalItemService
         {
             Definition = m.Definition,
             Connotation = m.Connotation,
+            Intensity = m.Intensity,
+            IntensityNote = m.IntensityNote,
             Examples = m.Examples
         }).ToList()
     };

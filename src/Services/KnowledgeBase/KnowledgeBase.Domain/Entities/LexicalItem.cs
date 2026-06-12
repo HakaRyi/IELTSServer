@@ -25,13 +25,22 @@ public class LexicalItem
     public List<string> Antonyms { get; set; } = new();
 
     public string PersonalNotes { get; set; } = string.Empty;
+
+    /// <summary>Ngày tra/lưu từ — dùng để nhóm theo ngày trong app.</summary>
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
 public class Meaning
 {
     public string Definition { get; set; } = null!;
-    
+
     public string Connotation { get; set; } = "Neutral";
-    
+
+    /// <summary>Độ mạnh sắc thái 1-5 (1 = rất nhẹ, 5 = cực mạnh). 0 = không xác định (data cũ).</summary>
+    public int Intensity { get; set; }
+
+    /// <summary>Giải thích sắc thái, so sánh với từ gần nghĩa (vd: like &lt; love &lt; adore &lt; be obsessed with).</summary>
+    public string IntensityNote { get; set; } = string.Empty;
+
     public List<string> Examples { get; set; } = new();
 }

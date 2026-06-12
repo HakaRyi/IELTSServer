@@ -8,6 +8,7 @@ public interface ILexicalItemService
     Task<LookupResultDto> LookupAsync(string userId, string word);
     Task<PagedResult<LexicalItem>> GetVaultAsync(string userId, string? topic, int page, int pageSize);
     Task<List<string>> GetTopicsAsync(string userId);
+    Task<List<TopicStatDto>> GetTopicStatsAsync(string userId);
     Task<LexicalItem?> GetByIdAsync(string userId, string id);
     Task<LexicalItem> CreateAsync(string userId, CreateLexicalItemRequest request);
     Task<bool> UpdateAsync(string userId, string id, UpdateLexicalItemRequest request);

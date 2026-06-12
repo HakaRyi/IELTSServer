@@ -60,6 +60,14 @@ public class LexicalItemsController : ControllerBase
         return Ok(topics);
     }
 
+    // GET /api/lexical/topics/stats — [{topic, count}] cho tab Chủ đề
+    [HttpGet("topics/stats")]
+    public async Task<IActionResult> GetTopicStats()
+    {
+        var stats = await _service.GetTopicStatsAsync(UserId);
+        return Ok(stats);
+    }
+
     // GET /api/lexical/{id}
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(string id)
